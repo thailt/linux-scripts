@@ -147,4 +147,5 @@
 		- Major Compaction I/O storms
 
 
-## BloomFilter:	An HBase Bloom Filter is an efficient mechanism to test whether a StoreFile contains a specific row or row-col cell
+## BloomFilter:	
+	An HBase Bloom Filter is an efficient mechanism to test whether a StoreFile contains a specific row or row-col cell
