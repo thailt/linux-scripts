@@ -1,3 +1,4 @@
+```bash
 #!/bin/bash
 #usage: sudo ./deploy-as-a-service.sh /path/to/service/execution/file service-name which-user-run-this-service
 chmod a+x  $1
@@ -24,6 +25,7 @@ sudo chown $3 /var/log/$2.log
 sudo service $2 start
 
 tail -1000 /var/log/$2.log
+```
 
 
 
