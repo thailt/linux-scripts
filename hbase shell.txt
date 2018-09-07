@@ -1,0 +1,44 @@
+hbase shell cmd
+
+
+#scan with filter
+scan 'crawl', {COLUMNS=>'customer_crawl:status', FILTER => "SingleColumnValueFilter('customer_crawl','status', =, 'binary:C',true,true)" }
+scan 'crawl', {COLUMNS=>'acc_crawl', FILTER => "SingleColumnValueFilter('acc_crawl','status', =, 'binary:L',true,true)" }
+scan 'customer_social', {COLUMNS=>'fb_acc:uname', FILTER => "SingleColumnValueFilter('fb_acc','status', !=, 'binary:B',true,true)" }
+scan 'customer_social', {COLUMNS=>'fb_acc:aid', LIMIT=>10}
+scan 'customer_social', {COLUMNS=>'fb_acc', LIMIT=>10}
+
+#get by row key
+get 'customer_social', '100005706015495'
+get 'customer_social', '00F913A8C18BDC8FF5D3CC5D1979FA4C'
+get 'crawl', '00E365382F760C6F321A1F0E756ADDF1'
+get 'crawl', 'maymay11265@yahoo.com'
+get 'customer_social', 'ta.tien.tai'
+get 'customer_social', '100000122767024'
+
+
+#update
+put 'crawl','egsoft.rec','acc_crawl:status','A'
+put 'crawl','egsoft.rec','acc_crawl:status','A'
+put 'crawl','bpz03322@kloap.com','acc_crawl:status','A'
+
+#DDL
+alter 'crawl', 'delete' => 'customer_crawl'
+alter 'crawl', 'delete' => 'fb_acc_silhouette'
+alter 'crawl', 'customer_crawl'
+alter 'customer_social', 'fb_acc_silhouette'
+scan 'crawl',{COLUMNS=>'customer_crawl:status'}
+alter 'customer_social', 'delete' => 'fb_acc'
+alter 'customer_social', 'fb_acc'
+
+#delete
+deleteall 'crawl','thailt'
+
+scan 'customer_social', {COLUMNS=>'fb_acc', FILTER => "SingleColumnValueFilter('fb_acc','cid', =, 'binary:0C6EA3F9B6C94E78835E5FCED9B57B85',true,true)" }
+scan 'customer_social', {COLUMNS=>'fb_acc', FILTER => "SingleColumnValueFilter('fb_acc','byApi', =, 'binary:true',true,true) AND SingleColumnValueFilter('fb_acc','byVisited', =, 'binary:true',true,true)" }
+
+
+scan 'customer_social', {COLUMNS=>'fb_acc', LIMIT=>10}
+
+
+scan 'customer_social', {COLUMNS=>'fb_acc', FILTER => "SingleColumnValueFilter('fb_acc','byVisited', =, 'binary:true',true,true)" }

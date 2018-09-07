@@ -1,0 +1,191 @@
+#mysql scrip:
+
+#setup ntpd server if need
+sudo ls /
+sudo yum install ntp
+sudo chkconfig ntpd on
+sudo ntpdate pool.ntp.org
+sudo service ntpd start
+
+#install epel reposity
+wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+rpm -ivh epel-release-latest-7.noarch.rpm
+
+
+#install mysql repository to centos
+yum install -y wget
+wget https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
+yum localinstall mysql57-community-release-el7-11.noarch.rpm -y
+
+#install mysql-server to centos7
+yum install  mysql-community-server
+
+#check default password after install mysql-server
+grep 'temporary password' /var/log/mysqld.log
+
+#update password for user root
+mysql> ALTER USER 'root'@'localhost' IDENTIFIED BY 'Bigdata@123'
+
+#create user root to login from other host from localhost
+mysql> CREATE USER 'root'@'%' IDENTIFIED BY 'Bigdata@123';
+mysql> GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+mysql> FLUSH PRIVILEGES;
+
+UPDATE mysql.user SET authentication_string = PASSWORD('MyNewPassword')
+    -> WHERE User = 'root' AND Host = 'localhost';
+
+UPDATE mysql.user SET authentication_string = PASSWORD('Bigdata@123')
+  WHERE User = 'root' AND Host = '%';
+  
+
+#install mysql cluster
+yum install yum-utils
+
+#Install mysql repo
+yum install -y https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
+yum update mysql57-community-release
+
+#Selecting the MySQL NDB Cluster Subrepository
+yum-config-manager --disable mysql57-community
+yum-config-manager --enable mysql-cluster-7.5-community
+
+
+I - Install epel release 
+## RHEL/CentOS 7 64-Bit ##
+## https://www.tecmint.com/how-to-enable-epel-repository-for-rhel-centos-6-5/ ##
+# wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+# rpm -ivh epel-release-latest-7.noarch.rpm
+yum repolist
+
+#https://dev.mysql.com/doc/mysql-cluster-excerpt/5.7/en/mysql-cluster-install-linux-rpm.html
+#Install the executables for management nodes:
+yum install mysql-cluster-community-management-server -y
+
+#Install the executables for data nodes:
+yum install mysql-cluster-community-data-node -y 
+
+#Install the components for SQL nodes:
+yum install mysql-cluster-community-server -y
+yum install mysql-cluster-community-common -y
+
+
+II - setup data node
+mkdir /usr/local/mysql/data -p
+vi /etc/my.cnf
+============
+[mysqld]
+# Options for mysqld process:
+ndbcluster                      				# run NDB storage engine
+
+[mysql_cluster]
+# Options for NDB Cluster processes:
+ndb-connectstring=10.10.1.107,10.10.1.108		# location of management server
+============
+	
+II - setup sql node
+mkdir /usr/local/mysql/data -p
+vi /etc/my.cnf
+============
+[mysqld]
+# Options for mysqld process:
+ndbcluster                      				# run NDB storage engine
+
+[mysql_cluster]
+# Options for NDB Cluster processes:
+ndb-connectstring=10.10.1.107,10.10.1.108		# location of management server
+============
+
+
+III - setup management node
+mkdir /var/lib/mysql-cluster -p 
+vi /var/lib/mysql-cluster/config.ini
+============
+[ndbd default]
+# Options affecting ndbd processes on all data nodes:
+NoOfReplicas=2    # Number of replicas
+DataMemory=80M    # How much memory to allocate for data storage
+IndexMemory=18M   # How much memory to allocate for index storage
+                  # For DataMemory and IndexMemory, we have used the
+                  # default values. Since the "world" database takes up
+                  # only about 500KB, this should be more than enough for
+                  # this example NDB Cluster setup.
+ServerPort=2202   # This the default value; however, you can use any
+                  # port that is free for all the hosts in the cluster
+                  # Note1: It is recommended that you do not specify the port
+                  # number at all and simply allow the default value to be used
+                  # instead
+                  # Note2: The port was formerly specified using the PortNumber 
+                  # TCP parameter; this parameter is no longer available in NDB
+                  # Cluster 7.5.
+
+[ndb_mgmd]
+# Management process options:
+HostName=10.10.1.108	# Hostname or IP address of MGM node
+DataDir=/var/lib/mysql-cluster		# Directory for MGM node log files
+
+[ndb_mgmd]
+# Management process options:
+HostName=10.10.1.107	# Hostname or IP address of MGM node
+DataDir=/var/lib/mysql-cluster		# Directory for MGM node log files
+
+[ndbd]
+# Options for data node "A":
+                                # (one [ndbd] section per data node)
+HostName=10.10.1.106	        # Hostname or IP address
+NodeId=2                        # Node ID for this data node
+DataDir=/usr/local/mysql/data   # Directory for this data node's data files
+
+[ndbd]
+# Options for data node "B":
+HostName=10.10.1.105            # Hostname or IP address
+NodeId=3                        # Node ID for this data node
+DataDir=/usr/local/mysql/data   # Directory for this data node's data files
+
+[mysqld]
+# SQL node options:
+HostName=10.10.1.108	# Hostname or IP address
+									# (additional mysqld connections can be
+									# specified for this node for various
+									# purposes such as running ndb_restore)
+								
+[mysqld]
+# SQL node options:
+HostName=10.10.1.107	# Hostname or IP address
+									# (additional mysqld connections can be
+									# specified for this node for various
+									# purposes such as running ndb_restore)
+============
+
+#start ndb mgm
+ndb_mgmd -f /var/lib/mysql-cluster/config.ini --skip-config-cache
+
+IV - start
+#start sql node
+mysqld
+mysqld --skip-grant-tables &
+
+
+UPDATE mysql.user SET authentication_string = PASSWORD('Bigdata@123')
+  WHERE User = 'root' AND Host = '%';
+  
+#start data node
+
+V - shutdown
+ndb_mgm -e shutdown
+
+
+#SUBSTRING_INDEX(product_url, '-', -1)
+
+
+#error list:
+#2nd sql node cannot be connect to
+Host 'centos02.egs.com' is not allowed to connect to this MySQL server
+
+#ClusterJFatalUserException: Attempt to load native library ndbclient from path
+-Djava.library.path=c:/mysql/lib/
+
+
+#Connection done from wrong host ip
+https://forums.mysql.com/read.php?25,614690,614690
+
+https://dev.mysql.com/doc/ndbapi/en/mccj-using-clusterj.html

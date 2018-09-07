@@ -1,0 +1,33 @@
+cài đặt mysql repo, ref: https://dev.mysql.com/doc/mysql-repo-excerpt/5.6/en/linux-installation-yum-repo.html
+[root]# wget https://dev.mysql.com/get/mysql80-community-release-el7-1.noarch.rpm
+[root]# yum localinstall mysql80-community-release-el7-1.noarch.rpm
+[root]# yum install -y yum-utils
+[root]# yum-config-manager --enable mysql56-community
+
+cài đặt mysql 
+[root]# yum install -y mysql-server
+[root]# systemctl enable mysqld
+[root]# service mysqld start
+
+tìm mật khẩu tạm được tạo bởi mysql của root: /var/log/mysql.log
+[Note] A temporary password is generated for root@localhost: cpLtTLl41e=S
+
+cấu hình policy passwork về low
+[root]#vi /etc/my.cnf
+validate_password_policy=LOW
+
+restart mysql service
+[root]# service mysqld restart
+
+reset mật khẩu root:
+[root]# mysql -u root -p 
+
+mysql> ALTER USER 'root'@'localhost' IDENTIFIED BY 'root@123';
+
+tạo user dtms với mật khẩu dtms@123
+mysql> CREATE USER 'dtms'@'localhost' IDENTIFIED BY 'dtms@123';
+mysql> GRANT ALL PRIVILEGES ON *.* TO 'dtms'@'localhost WITH GRANT OPTION;
+
+mysql> CREATE USER 'dtms'@'%' IDENTIFIED BY 'dtms@123';
+mysql> GRANT ALL PRIVILEGES ON *.* TO 'dtms'@'%' WITH GRANT OPTION;
+mysql> FLUSH PRIVILEGES;

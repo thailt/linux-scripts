@@ -1,0 +1,49 @@
+hướng dẫn cài đặt project để chạy spark-submit
+
+build:
+	cần build dạng uber-jar (file jar có đủ các library dependency cần thiết)
+	dùng maven-shade-plugin trong pom.xml, cấu hình như bên dưới:
+	
+	    <build>
+        <finalName>batch-model-trainer</finalName>
+        <plugins>
+            <plugin>
+                <!--shade plugin will copy jar library to final binary, dont have problem of same classpath-->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.1.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <!--minimize file size, normally reduce size of uber-jar file size to 50%, take 50% more time-->
+                            <!--to compile-->
+                            <!--<minimizeJar>true</minimizeJar>-->
+
+                            <!--exclude manifest file from other library to fix error invalid signature-->
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+
+            </plugin>
+        </plugins>
+    </build>
+	
+
+spark-submit:
+	$SPARK_HOME/bin/spark-submit --deploy-mode cluster   --master yarn  --class vn.vtvcab.rs.spark.batch.RecommendationTrainerMain batch-model-trainer/batch-model-trainer.jar
+	trong đó tên class cần chạy được cấu hình trong option --class
+	sau đó là đến đường dẫn đến file uber-jar ở bước trên, file uber-jar này có thể put lên hdfs để tiện cho việc quản lý, khi đó đường dẫn là path đến hdfs, ví dụ: hdfs://10.0.0.30:9000/batch-model-trainer/batch-model-trainer.jar
